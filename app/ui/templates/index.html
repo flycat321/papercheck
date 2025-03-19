@@ -1,0 +1,137 @@
+{% extends "layout.html" %}
+
+{% block title %}首页 - 民国报纸信息提取系统{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="card-title">民国报纸信息提取系统</h2>
+                    <p class="card-text">
+                        欢迎使用民国报纸信息提取系统！本系统专为研究民国时期报纸的学者设计，利用OCR技术自动识别报纸中的文字内容，并提供检索和分析功能。
+                    </p>
+                    <p class="card-text">
+                        您可以上传报纸的扫描图片或PDF文件，系统将自动提取其中的文字内容，并存储在数据库中方便查询。
+                    </p>
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('upload_file') }}" class="btn btn-primary btn-lg">上传报纸</a>
+                        <a href="{{ url_for('search') }}" class="btn btn-secondary btn-lg ms-2">检索内容</a>
+                    </div>
+                </div>
+            </div>
+            
+            {% if newspapers %}
+            <div class="card">
+                <div class="card-header">
+                    <h3>最近添加的报纸</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>名称</th>
+                                    <th>日期</th>
+                                    <th>期号</th>
+                                    <th>页数</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for newspaper in newspapers %}
+                                <tr>
+                                    <td>{{ newspaper.name }}</td>
+                                    <td>{{ newspaper.issue_date }}</td>
+                                    <td>{{ newspaper.issue_number }}</td>
+                                    <td>{{ newspaper.total_pages }}</td>
+                                    <td>
+                                        {% if newspaper.ocr_status == 0 %}
+                                            <span class="badge bg-warning">待处理</span>
+                                        {% elif newspaper.ocr_status == 1 %}
+                                            <span class="badge bg-success">已处理</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">处理错误</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('view_newspaper', newspaper_id=newspaper.id) }}" class="btn btn-sm btn-info">查看</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-end">
+                        <a href="{{ url_for('list_newspapers') }}" class="btn btn-link">查看全部 &raquo;</a>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                还没有上传任何报纸。<a href="{{ url_for('upload_file') }}">立即上传</a>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>功能简介</h4>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-2" viewBox="0 0 16 16">
+                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                            <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+                        </svg>
+                        支持图片和PDF格式的报纸文件导入
+                    </li>
+                    <li class="list-group-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-text-paragraph me-2" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M2 12.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm4-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5z"/>
+                        </svg>
+                        利用OCR技术自动识别中文文字
+                    </li>
+                    <li class="list-group-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-tags me-2" viewBox="0 0 16 16">
+                            <path d="M3 2v4.586l7 7L14.586 9l-7-7H3zM2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586V2z"/>
+                            <path d="M5.5 5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm0 1a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM1 7.086a1 1 0 0 0 .293.707L8.75 15.25l-.043.043a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 0 7.586V3a1 1 0 0 1 1-1v5.086z"/>
+                        </svg>
+                        自动提取并标记关键信息
+                    </li>
+                    <li class="list-group-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search me-2" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                        </svg>
+                        强大的全文检索功能
+                    </li>
+                    <li class="list-group-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-database me-2" viewBox="0 0 16 16">
+                            <path d="M4.318 2.687C5.234 2.271 6.536 2 8 2s2.766.27 3.682.687C12.644 3.125 13 3.627 13 4c0 .374-.356.875-1.318 1.313C10.766 5.729 9.464 6 8 6s-2.766-.27-3.682-.687C3.356 4.875 3 4.373 3 4c0-.374.356-.875 1.318-1.313ZM13 5.698V7c0 .374-.356.875-1.318 1.313C10.766 8.729 9.464 9 8 9s-2.766-.27-3.682-.687C3.356 7.875 3 7.373 3 7V5.698c.271.202.58.378.904.525C4.978 6.711 6.427 7 8 7s3.022-.289 4.096-.777A4.92 4.92 0 0 0 13 5.698ZM14 4c0-1.007-.875-1.755-1.904-2.223C11.022 1.289 9.573 1 8 1s-3.022.289-4.096.777C2.875 2.245 2 2.993 2 4v9c0 1.007.875 1.755 1.904 2.223C4.978 15.71 6.427 16 8 16s3.022-.289 4.096-.777C13.125 14.755 14 14.007 14 13V4Zm-1 4.698V10c0 .374-.356.875-1.318 1.313C10.766 11.729 9.464 12 8 12s-2.766-.27-3.682-.687C3.356 10.875 3 10.373 3 10V8.698c.271.202.58.378.904.525C4.978 9.71 6.427 10 8 10s3.022-.289 4.096-.777A4.92 4.92 0 0 0 13 8.698Zm0 3V13c0 .374-.356.875-1.318 1.313C10.766 14.729 9.464 15 8 15s-2.766-.27-3.682-.687C3.356 13.875 3 13.373 3 13v-1.302c.271.202.58.378.904.525C4.978 12.71 6.427 13 8 13s3.022-.289 4.096-.777c.324-.147.633-.323.904-.525Z"/>
+                        </svg>
+                        数据库存储所有提取信息
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h4>使用指南</h4>
+                </div>
+                <div class="card-body">
+                    <ol>
+                        <li>点击"上传报纸"按钮上传报纸文件（支持PDF、JPG等格式）</li>
+                        <li>系统会自动处理文件并提取文字内容</li>
+                        <li>处理完成后，您可以浏览提取的内容</li>
+                        <li>使用搜索功能查找特定内容</li>
+                    </ol>
+                    <p class="card-text text-muted">
+                        <small>注意：处理大型PDF文件可能需要较长时间，请耐心等待。</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %} 

@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ article.title }} - 民国报纸信息提取系统{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('view_newspaper', newspaper_id=article.page.newspaper_id) }}">{{ article.page.newspaper.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('view_page', page_id=article.page_id) }}">第{{ article.page.page_number }}页</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">文章详情</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <h1 class="mb-3">{{ article.title }}</h1>
+            {% if article.extracted_date %}
+            <p class="text-muted mb-3">
+                <i class="fas fa-calendar-alt"></i> {{ article.extracted_date }}
+            </p>
+            {% endif %}
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{{ url_for('view_page', page_id=article.page_id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> 返回页面详情
+            </a>
+        </div>
+    </div>
+
+    <!-- 文章内容 -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">文章内容</h5>
+        </div>
+        <div class="card-body">
+            <div class="article-content">
+                {% if article.content %}
+                    <p>{{ article.content|replace('\n', '<br>')|safe }}</p>
+                {% else %}
+                    <p class="text-muted">暂无文章内容</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 关键词 -->
+    {% if article.keywords %}
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">关键词</h5>
+        </div>
+        <div class="card-body">
+            <div class="d-flex flex-wrap">
+                {% for keyword in article.keywords %}
+                    <a href="{{ url_for('search', search_type='keyword', search_text=keyword.word) }}" class="badge bg-info text-dark me-2 mb-2 p-2">
+                        {{ keyword.word }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 来源信息 -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">来源信息</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>报纸名称：</strong> <a href="{{ url_for('view_newspaper', newspaper_id=article.page.newspaper_id) }}">{{ article.page.newspaper.name }}</a></p>
+            <p><strong>期号：</strong> {{ article.page.newspaper.issue_number|default('未知', true) }}</p>
+            <p><strong>发行日期：</strong> {{ article.page.newspaper.issue_date|default('未知', true) }}</p>
+            <p><strong>页码：</strong> <a href="{{ url_for('view_page', page_id=article.page_id) }}">第{{ article.page.page_number }}页</a></p>
+            {% if article.position_x is not none and article.position_y is not none %}
+            <p><strong>版面位置：</strong> X:{{ "%.2f"|format(article.position_x) }}%, Y:{{ "%.2f"|format(article.position_y) }}%</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

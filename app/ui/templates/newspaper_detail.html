@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ newspaper.name }} - 民国报纸信息提取系统{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">报纸详情</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <h1 class="mb-3">{{ newspaper.name }}</h1>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> 返回首页
+            </a>
+        </div>
+    </div>
+
+    <!-- 报纸信息卡片 -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">报纸信息</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>报纸名称：</strong> {{ newspaper.name }}</p>
+                    <p><strong>发行日期：</strong> {{ newspaper.issue_date|default('未知', true) }}</p>
+                    <p><strong>期号：</strong> {{ newspaper.issue_number|default('未知', true) }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>总页数：</strong> {{ newspaper.total_pages }}</p>
+                    <p><strong>处理状态：</strong> 
+                        {% if newspaper.ocr_status == 0 %}
+                            <span class="badge bg-warning">未处理</span>
+                        {% elif newspaper.ocr_status == 1 %}
+                            <span class="badge bg-success">已处理</span>
+                        {% else %}
+                            <span class="badge bg-danger">处理错误</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>上传时间：</strong> {{ newspaper.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页面列表 -->
+    <h2 class="mb-3">报纸页面 ({{ pages|length }}页)</h2>
+    
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-4">
+        {% for page in pages %}
+        <div class="col">
+            <div class="card h-100">
+                <img src="{{ url_for('static', filename=page.page_image_path.replace('app/ui/static/', '')) }}" 
+                     class="card-img-top" alt="页面 {{ page.page_number }}">
+                <div class="card-body">
+                    <h5 class="card-title">第 {{ page.page_number }} 页</h5>
+                    <p class="card-text">
+                        {% if page.ocr_text %}
+                        <small class="text-muted">{{ page.ocr_text|truncate(150) }}</small>
+                        {% else %}
+                        <small class="text-muted">无OCR文本</small>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <a href="{{ url_for('view_page', page_id=page.id) }}" class="btn btn-sm btn-primary">查看详情</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not pages %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> 暂无页面数据
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+
+{% block title %}搜索结果 - 民国报纸信息提取系统{% endblock %}
+
+{% block content %}
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <h2>搜索结果</h2>
+            <p class="text-muted">
+                {% if search_type == 'keyword' %}
+                关键词搜索: "{{ search_text }}"
+                {% else %}
+                内容搜索: "{{ search_text }}"
+                {% endif %}
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('search') }}" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search me-2" viewBox="0 0 16 16">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                </svg>
+                新搜索
+            </a>
+        </div>
+    </div>
+
+    {% if articles %}
+        <div class="mb-3">
+            <span class="badge bg-primary">共找到 {{ articles|length }} 个结果</span>
+        </div>
+        
+        {% for article in articles %}
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">{{ article.title }}</h4>
+                    {% if article.extracted_date %}
+                        <span class="badge bg-secondary">{{ article.extracted_date }}</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <p>
+                        {% set content_preview = article.content[:300] + '...' if article.content|length > 300 else article.content %}
+                        {{ content_preview|safe|replace(search_text, '<mark>' + search_text + '</mark>') }}
+                    </p>
+                    
+                    {% if article.keywords %}
+                        <div class="mt-2">
+                            {% for keyword in article.keywords %}
+                                <span class="badge bg-info text-dark me-1">{{ keyword.word }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted">
+                                来源: 
+                                <a href="{{ url_for('view_newspaper', newspaper_id=article.page.newspaper.id) }}">
+                                    {{ article.page.newspaper.name }}
+                                </a>
+                                {% if article.page.newspaper.issue_number %}
+                                    第{{ article.page.newspaper.issue_number }}期
+                                {% endif %}
+                                第{{ article.page.page_number }}页
+                            </small>
+                        </div>
+                        <a href="{{ url_for('view_article', article_id=article.id) }}" class="btn btn-outline-primary btn-sm">
+                            阅读全文
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            <h4 class="alert-heading">未找到相关结果</h4>
+            <p>
+                很抱歉，未能找到与"{{ search_text }}"相关的内容。您可以尝试以下方法：
+            </p>
+            <ul>
+                <li>检查关键词拼写是否正确</li>
+                <li>尝试使用不同的关键词或同义词</li>
+                <li>尝试减少搜索词数量</li>
+                <li>尝试切换搜索类型（内容搜索/关键词搜索）</li>
+            </ul>
+            <a href="{{ url_for('search') }}" class="btn btn-primary">返回搜索</a>
+        </div>
+    {% endif %}
+    
+{% endblock %} 

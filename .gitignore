@@ -1,0 +1,76 @@
+# Python环境相关
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 测试相关
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# 虚拟环境
+venv/
+ENV/
+.env
+
+# IDE相关
+.idea/
+.vscode/
+*.swp
+*.swo
+.project
+.pydevproject
+.settings/
+
+# 数据相关（可根据需要调整）
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+*.db
+*.sqlite
+
+# 临时文件
+.DS_Store
+.ipynb_checkpoints
+*.log
+logs/
+temp/
+tmp/
+
+# 已处理的图像（体积可能很大）
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.tif
+*.tiff
+!docs/images/*.png
+!docs/images/*.jpg
+
+# 上传的PDF文件
+*.pdf 

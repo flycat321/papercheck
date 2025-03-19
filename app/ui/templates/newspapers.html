@@ -1,0 +1,101 @@
+{% extends "layout.html" %}
+
+{% block title %}报纸列表 - 民国报纸信息提取系统{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">报纸列表</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <h1 class="mb-3">已上传报纸列表</h1>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{{ url_for('upload_file') }}" class="btn btn-primary">
+                <i class="fas fa-upload"></i> 上传新报纸
+            </a>
+        </div>
+    </div>
+
+    {% if newspapers %}
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">报纸列表</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">报纸名称</th>
+                                <th scope="col">发行日期</th>
+                                <th scope="col">期号</th>
+                                <th scope="col">页数</th>
+                                <th scope="col">状态</th>
+                                <th scope="col">上传时间</th>
+                                <th scope="col">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for newspaper in newspapers %}
+                            <tr>
+                                <td>{{ newspaper.id }}</td>
+                                <td>{{ newspaper.name }}</td>
+                                <td>{{ newspaper.issue_date|default('未知', true) }}</td>
+                                <td>{{ newspaper.issue_number|default('未知', true) }}</td>
+                                <td>{{ newspaper.total_pages }}</td>
+                                <td>
+                                    {% if newspaper.ocr_status == 0 %}
+                                        <span class="badge bg-warning">未处理</span>
+                                    {% elif newspaper.ocr_status == 1 %}
+                                        <span class="badge bg-success">已处理</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">处理错误</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ newspaper.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    <a href="{{ url_for('view_newspaper', newspaper_id=newspaper.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> 查看
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分页导航（如果需要） -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {{ 'disabled' if offset == 0 else '' }}">
+                    <a class="page-link" href="{{ url_for('list_newspapers', offset=offset-limit if offset-limit >= 0 else 0, limit=limit) }}">上一页</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('list_newspapers', offset=offset+limit, limit=limit) }}">下一页</a>
+                </li>
+            </ul>
+        </nav>
+    {% else %}
+        <div class="alert alert-info">
+            <h4 class="alert-heading">暂无报纸数据</h4>
+            <p>系统中还没有上传任何报纸。您可以点击下方按钮上传第一份报纸。</p>
+            <a href="{{ url_for('upload_file') }}" class="btn btn-primary">
+                <i class="fas fa-upload"></i> 上传报纸
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

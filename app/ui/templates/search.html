@@ -1,0 +1,87 @@
+{% extends "layout.html" %}
+
+{% block title %}内容检索 - 民国报纸信息提取系统{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">报纸内容检索</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('search') }}">
+                        <div class="mb-3">
+                            <label for="search_text" class="form-label">搜索内容</label>
+                            <input type="text" class="form-control form-control-lg" id="search_text" name="search_text" placeholder="输入要搜索的内容..." required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">搜索类型</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="search_type" id="search_type_content" value="content" checked>
+                                <label class="form-check-label" for="search_type_content">
+                                    全文内容搜索
+                                </label>
+                                <small class="text-muted d-block">在文章正文中查找相关内容</small>
+                            </div>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="radio" name="search_type" id="search_type_keyword" value="keyword">
+                                <label class="form-check-label" for="search_type_keyword">
+                                    关键词搜索
+                                </label>
+                                <small class="text-muted d-block">查找具有特定关键词标记的文章</small>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search me-2" viewBox="0 0 16 16">
+                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                                </svg>
+                                搜索
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4>搜索技巧</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>全文内容搜索</h5>
+                            <ul>
+                                <li>支持模糊匹配，可以查找包含特定内容的文章</li>
+                                <li>可以搜索人名、地名、事件名称等</li>
+                                <li>输入多个词语可以同时查找包含这些词的文章</li>
+                                <li>对于特定日期，可以尝试使用不同的格式，如"1927年5月"或"民国十六年五月"</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>关键词搜索</h5>
+                            <ul>
+                                <li>查找系统自动标记的关键词</li>
+                                <li>适合查找特定类别的文章</li>
+                                <li>关键词通常是从文章中提取的重要词汇</li>
+                                <li>例如搜索"经济"可以找到与经济相关的文章</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <h5>搜索示例：</h5>
+                        <ul>
+                            <li>"北伐战争" - 查找与北伐战争相关的文章</li>
+                            <li>"上海 商业" - 查找同时包含"上海"和"商业"的文章</li>
+                            <li>"1927年" - 查找1927年相关的文章</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %} 

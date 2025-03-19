@@ -1,0 +1,147 @@
+/* 报纸阅读与信息提取系统自定义样式 */
+
+/* 全局样式 */
+body {
+    background-color: #f8f9fa;
+    color: #333;
+    font-family: "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+}
+
+/* 导航栏 */
+.navbar-brand {
+    font-weight: bold;
+}
+
+/* 报纸页面查看区域 */
+.newspaper-image-container {
+    overflow: hidden;
+    background-color: #eee;
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.newspaper-image {
+    max-width: 100%;
+    height: auto;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+/* 文章内容样式 */
+.article-content {
+    font-family: "SimSun", "STSong", "NSimSun", serif;
+    line-height: 1.8;
+    white-space: pre-line;
+    background-color: white;
+    padding: 20px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.article-meta {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+/* 关键词标签 */
+.keyword-tag {
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+
+/* 搜索高亮 */
+mark {
+    background-color: #fff176;
+    padding: 2px;
+    border-radius: 2px;
+}
+
+/* 搜索结果卡片 */
+.search-result-card:hover {
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+/* 上传区域 */
+.upload-area {
+    border: 2px dashed #ccc;
+    padding: 30px;
+    text-align: center;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+.upload-area:hover {
+    border-color: #80bdff;
+    background-color: #f0f7ff;
+}
+
+/* 中文OCR结果样式 */
+.ocr-result {
+    direction: rtl;  /* 对于古籍可能需要从右到左阅读 */
+    font-family: "SimSun", "STSong", "NSimSun", serif;
+    font-size: 16px;
+    line-height: 2;
+}
+
+/* 页码导航 */
+.page-navigation {
+    margin: 20px 0;
+}
+
+.page-number {
+    display: inline-block;
+    padding: 5px 10px;
+    margin: 0 3px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.page-number.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+/* 报纸页面缩略图 */
+.page-thumbnail {
+    width: 150px;
+    height: auto;
+    border: 1px solid #ddd;
+    margin: 5px;
+    cursor: pointer;
+}
+
+.page-thumbnail:hover {
+    border-color: #007bff;
+}
+
+/* 加载指示器 */
+.loading-spinner {
+    text-align: center;
+    padding: 30px;
+}
+
+/* 打印优化 */
+@media print {
+    .navbar, .footer, .search-form, .btn {
+        display: none !important;
+    }
+    
+    .article-content {
+        font-size: 12pt;
+        line-height: 1.6;
+        border: none;
+        padding: 0;
+    }
+    
+    body {
+        background-color: white;
+        margin: 0;
+        padding: 15px;
+    }
+} 
