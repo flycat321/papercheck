@@ -32,23 +32,40 @@ PROCESSED_DIR.mkdir(exist_ok=True, parents=True)
 class OCRHandler:
     """OCR处理类，负责从报纸图片/PDF中提取文字"""
     
-    def __init__(self, use_gpu=False, poppler_path=None):
+    def __init__(self, use_gpu=False, poppler_path=None, text_direction='horizontal', text_type='simplified'):
         """
         初始化OCR处理器
         
         Args:
             use_gpu: 是否使用GPU加速
             poppler_path: Poppler的路径，主要用于Windows系统
+            text_direction: 文字方向，horizontal(横排)或vertical(竖排)
+            text_type: 文字类型，simplified(简体中文)或traditional(繁体中文)
         """
+        # 确定OCR语言选项
+        lang = "ch"
+        if text_type == 'traditional':
+            # 对于繁体中文，使用台湾模型
+            lang = "chinese_cht"
+            logger.info("使用繁体中文识别模型")
+        else:
+            logger.info("使用简体中文识别模型")
+            
+        # 记录文字方向和类型
+        self.text_direction = text_direction
+        self.text_type = text_type
+        logger.info(f"文字方向设置为: {text_direction}, 文字类型: {text_type}")
+        
         # 初始化OCR引擎，针对中文报纸进行优化
         self.ocr = PaddleOCR(
             use_gpu=use_gpu,
-            lang="ch",  # 中文
+            lang=lang,  # 语言模型
             use_angle_cls=True,  # 使用角度分类器
             show_log=False,
             det_db_box_thresh=0.5,  # 检测框阈值
             rec_model_dir=None,  # 使用默认模型
-            det_model_dir=None
+            det_model_dir=None,
+            cls_model_dir=None  # 角度分类器模型
         )
         
         # 保存Poppler路径
@@ -57,7 +74,7 @@ class OCRHandler:
         # 加载结巴分词词典（可以添加古文/民国时期常用词汇）
         # jieba.load_userdict("path/to/dict.txt")
         
-        logger.info("OCR引擎初始化完成")
+        logger.info(f"OCR引擎初始化完成，文字方向: {text_direction}，文字类型: {text_type}")
     
     def process_file(self, file_path, newspaper_name=None):
         """
@@ -270,7 +287,9 @@ class OCRHandler:
                     newspaper_id=newspaper_id,
                     page_number=page_number,
                     page_image_path=str(page_image_path),
-                    ocr_text=ocr_text
+                    ocr_text=ocr_text,
+                    text_direction=self.text_direction,
+                    text_type=self.text_type
                 )
                 logger.info(f"页面记录添加成功, ID: {page_id}")
                 
@@ -326,7 +345,9 @@ class OCRHandler:
                 newspaper_id=newspaper_id,
                 page_number=1,
                 page_image_path=str(page_image_path),
-                ocr_text=ocr_text
+                ocr_text=ocr_text,
+                text_direction=self.text_direction,
+                text_type=self.text_type
             )
             
             # 提取文章和关键词
@@ -354,12 +375,62 @@ class OCRHandler:
         Returns:
             OCR结果
         """
-        # 图像预处理可以在这里添加
-        # 例如：调整对比度、二值化等
+        # 图像预处理
+        # 如果是竖排文字，需要特殊处理
+        if self.text_direction == 'vertical':
+            logger.info("处理竖排文字，应用图像旋转...")
+            
+            # 竖排文字处理方法1：顺时针旋转图像90度
+            # 这会把竖排文字转为横排，然后使用标准OCR识别
+            rotated_image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+            result = self.ocr.ocr(rotated_image, cls=True)
+            
+            # 如果旋转后识别结果不好，可以尝试以下备选方法
+            if not result or not result[0]:
+                logger.info("旋转90度后识别效果不佳，尝试逆时针旋转...")
+                rotated_image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                result = self.ocr.ocr(rotated_image, cls=True)
+            
+            if not result or not result[0]:
+                logger.info("尝试使用原始图像进行识别...")
+                result = self.ocr.ocr(image, cls=True)
+            
+            # 如果仍然没有识别到文字，使用更强的图像增强
+            if not result or not result[0]:
+                logger.info("尝试使用图像增强进行识别...")
+                # 增强图像对比度
+                enhanced_image = self._enhance_image(image)
+                result = self.ocr.ocr(enhanced_image, cls=True)
+                
+            return result[0] if result else []
+        else:
+            # 常规横排文字处理
+            result = self.ocr.ocr(image, cls=True)
+            return result[0] if result else []
+    
+    def _enhance_image(self, image):
+        """
+        增强图像处理，提高OCR识别率
         
-        # 运行OCR
-        result = self.ocr.ocr(image, cls=True)
-        return result[0] if result else []
+        Args:
+            image: OpenCV图片对象
+            
+        Returns:
+            增强后的图像
+        """
+        # 转换为灰度图
+        if len(image.shape) == 3:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = image
+            
+        # 二值化处理
+        _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        
+        # 去噪
+        denoised = cv2.fastNlMeansDenoising(binary, None, 10, 7, 21)
+        
+        return denoised
     
     def _convert_ocr_result_to_text(self, ocr_result):
         """
@@ -371,6 +442,11 @@ class OCRHandler:
         Returns:
             提取的文本
         """
+        # 如果是竖排文字，需要特殊处理排版
+        if self.text_direction == 'vertical':
+            return self._convert_vertical_text_result(ocr_result)
+        
+        # 常规横排文字处理
         text_lines = []
         for line in ocr_result:
             if line:
@@ -379,6 +455,69 @@ class OCRHandler:
                 text_lines.append(text)
         
         return "\n".join(text_lines)
+    
+    def _convert_vertical_text_result(self, ocr_result):
+        """
+        处理竖排文字的OCR结果，恢复竖排排版
+        
+        Args:
+            ocr_result: OCR的原始结果
+            
+        Returns:
+            竖排格式的文本
+        """
+        if not ocr_result:
+            return ""
+            
+        # 按X坐标排序（从右到左）
+        # 在旋转图像识别竖排文字时，原始竖排文字的列会变成行
+        # X坐标越大的越靠右，对应原始竖排文本中越靠右的列
+        sorted_results = sorted(ocr_result, key=lambda line: -line[0][0][0] if line and line[0] else 0)
+        
+        # 将所有检测到的文本按列（原竖排）分组
+        columns = []
+        current_column = []
+        last_x = None
+        
+        x_tolerance = 50  # X坐标容差，用于判断是否属于同一列
+        
+        for line in sorted_results:
+            if not line:
+                continue
+                
+            box, (text, confidence) = line
+            center_x = (box[0][0] + box[1][0]) / 2  # 计算文本框中心X坐标
+            
+            # 第一个文本或与前一个文本在同一列
+            if last_x is None or abs(center_x - last_x) < x_tolerance:
+                current_column.append(text)
+                last_x = center_x
+            else:  # 新的一列
+                if current_column:
+                    columns.append(current_column)
+                current_column = [text]
+                last_x = center_x
+        
+        # 添加最后一列
+        if current_column:
+            columns.append(current_column)
+            
+        # 生成最终文本
+        # 每列作为独立的一段文本，列与列之间用空行分隔
+        # 这样前端可以正确识别列结构
+        result_text = []
+        
+        # 从右到左处理列（保持竖排文字的阅读顺序）
+        for column in columns:
+            if not column:
+                continue
+                
+            # 将每一列内的文本连接成一段
+            column_text = '\n'.join(column)
+            result_text.append(column_text)
+        
+        # 将所有列连接起来，每列之间用空行分隔
+        return '\n\n'.join(result_text)
     
     def _extract_articles_and_keywords(self, page_id, ocr_result, ocr_text):
         """

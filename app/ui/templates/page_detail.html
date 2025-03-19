@@ -44,11 +44,18 @@
         <div class="col-md-6">
             <!-- OCR提取文本 -->
             <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">OCR提取文本</h5>
+                    <div class="text-direction-toggle">
+                        <span class="small me-2">文字排版：</span>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-light active" id="btn-horizontal">横排</button>
+                            <button type="button" class="btn btn-light" id="btn-vertical">竖排</button>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <div class="ocr-text" style="max-height: 500px; overflow-y: auto;">
+                    <div class="ocr-text text-horizontal" style="max-height: 500px; overflow-y: auto;">
                         {% if page.ocr_text %}
                             <p>{{ page.ocr_text|replace('\n', '<br>')|safe }}</p>
                         {% else %}
@@ -102,4 +109,161 @@
         </div>
     </div>
 </div>
+
+{% block additional_styles %}
+<style>
+    /* 横排文字样式 */
+    .text-horizontal {
+        font-family: "Microsoft YaHei", "SimSun", "STSong", sans-serif;
+        line-height: 1.8;
+        white-space: pre-wrap;
+    }
+    
+    /* 竖排文字样式 - 优化版 */
+    .text-vertical {
+        font-family: "Microsoft YaHei", "SimSun", "STSong", sans-serif;
+        writing-mode: vertical-rl;
+        text-orientation: mixed; /* 使用mixed而不是upright以保持标点符号正确方向 */
+        white-space: pre-wrap;
+        height: 600px; /* 增加高度 */
+        width: 100%; /* 使用100%宽度 */
+        min-width: 500px; /* 增加最小宽度 */
+        overflow-x: auto;
+        overflow-y: hidden;
+        direction: rtl; /* 从右到左阅读 */
+        text-align: start;
+        padding: 20px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: flex-start; /* 从右侧开始排列 */
+        align-items: flex-start; /* 顶部对齐 */
+    }
+    
+    /* 竖排文本中的列 */
+    .text-vertical-column {
+        height: 100%;
+        margin: 0 10px;
+        padding: 0;
+        border-left: 1px dotted #ccc;
+        display: inline-block;
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        text-align: left;
+    }
+    
+    /* 繁体字体支持 */
+    .traditional-chinese {
+        font-family: "Microsoft JhengHei", "PMingLiU", "DFKai-SB", sans-serif;
+    }
+</style>
+{% endblock %}
+
+{% block additional_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ocrTextDiv = document.querySelector('.ocr-text');
+        const horizontalBtn = document.getElementById('btn-horizontal');
+        const verticalBtn = document.getElementById('btn-vertical');
+        
+        // 检查页面数据中的文字方向
+        {% if page.text_direction == 'vertical' %}
+            setVerticalText();
+        {% else %}
+            setHorizontalText();
+        {% endif %}
+        
+        // 如果是繁体中文，添加繁体字体类
+        {% if page.text_type == 'traditional' %}
+            ocrTextDiv.classList.add('traditional-chinese');
+        {% endif %}
+        
+        // 横排按钮点击事件
+        horizontalBtn.addEventListener('click', function() {
+            setHorizontalText();
+        });
+        
+        // 竖排按钮点击事件
+        verticalBtn.addEventListener('click', function() {
+            setVerticalText();
+        });
+        
+        function setHorizontalText() {
+            ocrTextDiv.classList.remove('text-vertical');
+            ocrTextDiv.classList.add('text-horizontal');
+            horizontalBtn.classList.add('active');
+            verticalBtn.classList.remove('active');
+            
+            // 恢复原始格式
+            if (ocrTextDiv.dataset.originalContent) {
+                ocrTextDiv.innerHTML = ocrTextDiv.dataset.originalContent;
+            }
+        }
+        
+        function setVerticalText() {
+            // 保存原始内容，以便切换回横排时恢复
+            if (!ocrTextDiv.dataset.originalContent) {
+                ocrTextDiv.dataset.originalContent = ocrTextDiv.innerHTML;
+            }
+            
+            // 应用竖排样式
+            ocrTextDiv.classList.remove('text-horizontal');
+            ocrTextDiv.classList.add('text-vertical');
+            horizontalBtn.classList.remove('active');
+            verticalBtn.classList.add('active');
+            
+            // 优化竖排文本展示
+            formatVerticalText();
+        }
+        
+        function formatVerticalText() {
+            // 获取原始文本
+            const originalText = ocrTextDiv.innerText;
+            
+            // 分割文本并保留原始行结构
+            let lines = originalText.split('\n');
+            
+            // 删除空行
+            lines = lines.filter(line => line.trim() !== '');
+            
+            // 创建临时数组存储分列后的内容
+            let columns = [];
+            let currentColumn = [];
+            
+            // 遍历每一行文本
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                
+                // 如果发现空行或大段空格（作为分栏标志），则开始新的一列
+                if (line === '' || (line.trim() === '' && currentColumn.length > 0)) {
+                    if (currentColumn.length > 0) {
+                        columns.push(currentColumn);
+                        currentColumn = [];
+                    }
+                } else {
+                    currentColumn.push(line);
+                }
+            }
+            
+            // 添加最后一列
+            if (currentColumn.length > 0) {
+                columns.push(currentColumn);
+            }
+            
+            // 清空容器
+            ocrTextDiv.innerHTML = '';
+            
+            // 反转列顺序，确保从右到左显示
+            columns.reverse();
+            
+            // 为每一列创建一个元素
+            columns.forEach(column => {
+                const columnElem = document.createElement('div');
+                columnElem.className = 'text-vertical-column';
+                columnElem.innerHTML = column.join('<br>');
+                ocrTextDiv.appendChild(columnElem);
+            });
+        }
+    });
+</script>
+{% endblock %}
 {% endblock %} 
